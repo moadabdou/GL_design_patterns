@@ -1,0 +1,4 @@
+com.glproject.creational.TextElementFactory
+com.glproject.creational.ImageElementFactory
+com.glproject.creational.TableElementFactory
+com.glproject.creational.CodeElementFactory
