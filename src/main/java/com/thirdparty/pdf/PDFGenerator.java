@@ -1,44 +1,75 @@
 package com.thirdparty.pdf;
 
-/**
- * Mock 3rd-party PDF library.
- * Simulates an external PDF generation API to be adapted later.
- */
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
+import java.io.IOException;
+
 public class PDFGenerator {
 
-    public boolean openDocument(String filePath) {
-        System.out.println("[PDFGenerator] Opening document: " + filePath);
-        return true;
+    private final String filePath;
+    private String header;
+    private String footer;
+
+    public PDFGenerator(String filePath) {
+        this.filePath = filePath;
     }
 
-    public boolean addPage() {
-        System.out.println("[PDFGenerator] Adding new page");
-        return true;
+    public void setHeader(String header) {
+        this.header = header;
     }
 
-    public boolean setFont(String fontName, int size) {
-        System.out.println("[PDFGenerator] Setting font: " + fontName + ", size: " + size);
-        return true;
+    public void setFooter(String footer) {
+        this.footer = footer;
     }
 
-    public boolean drawText(String text, float x, float y) {
-        System.out.println("[PDFGenerator] Drawing text '" + text + "' at (" + x + ", " + y + ")");
-        return true;
-    }
+    public void generatePDF(String content) {
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
 
-    public boolean drawImage(String imagePath, float x, float y, float width, float height) {
-        System.out.println("[PDFGenerator] Drawing image '" + imagePath + "' at (" + x + ", " + y +
-                ") size (" + width + "x" + height + ")");
-        return true;
-    }
+            try (PDPageContentStream cs = new PDPageContentStream(document, page)) {
+                float margin = 50;
+                float yStart = page.getMediaBox().getHeight() - margin;
+                float leading = 14.5f;
 
-    public boolean save() {
-        System.out.println("[PDFGenerator] Saving document");
-        return true;
-    }
+                if (header != null) {
+                    cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 18);
+                    cs.beginText();
+                    cs.newLineAtOffset(margin, yStart);
+                    cs.showText(header);
+                    cs.endText();
+                    yStart -= 30;
+                }
 
-    public boolean close() {
-        System.out.println("[PDFGenerator] Closing document");
-        return true;
+                cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
+                cs.setLeading(leading);
+                cs.beginText();
+                cs.newLineAtOffset(margin, yStart);
+
+                String[] lines = content.split("\n");
+                for (String line : lines) {
+                    cs.showText(line);
+                    cs.newLine();
+                }
+                cs.endText();
+
+                if (footer != null) {
+                    float footerY = margin;
+                    cs.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_OBLIQUE), 9);
+                    cs.beginText();
+                    cs.newLineAtOffset(margin, footerY);
+                    cs.showText(footer);
+                    cs.endText();
+                }
+            }
+
+            document.save(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate PDF", e);
+        }
     }
 }
