@@ -1,11 +1,9 @@
 package com.glproject.structural;
 
-import com.glproject.domain.*;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.Test;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -13,78 +11,85 @@ import static org.junit.jupiter.api.Assertions.*;
 class AdapterTest {
 
     @Test
-    void exporterAdapter_exportWithContent() throws IOException {
-        Document doc = new Document("Test Document");
-        doc.addElement(new TextElement("Hello, World!"));
-        doc.addElement(new ImageElement("photo.jpg", 100, 200));
+    void adapter_createsPdfWithText() throws IOException {
+        PDFBuilder pdf = new PDFLibraryAdapter();
+        pdf.newPage();
+        pdf.setFont(PDFBuilder.Font.HELVETICA, 12);
+        pdf.writeText("Hello World", 50, 50);
 
-        Exporter exporter = new PDFLibraryAdapter();
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        exporter.export(doc, output);
+        byte[] bytes = pdf.toByteArray();
+        assertTrue(bytes.length > 0);
 
-        try (PDDocument pdf = Loader.loadPDF(output.toByteArray())) {
+        try (PDDocument doc = Loader.loadPDF(bytes)) {
             PDFTextStripper stripper = new PDFTextStripper();
-            String text = stripper.getText(pdf);
-            assertTrue(text.contains("Hello, World!"));
-            assertTrue(text.contains("Test Document"));
+            String text = stripper.getText(doc);
+            assertTrue(text.contains("Hello World"));
         }
     }
 
     @Test
-    void exporterAdapter_emptyDocument() throws IOException {
-        Document doc = new Document("Empty Doc");
+    void adapter_multiplePages() throws IOException {
+        PDFBuilder pdf = new PDFLibraryAdapter();
+        pdf.newPage();
+        pdf.setFont(PDFBuilder.Font.HELVETICA, 12);
+        pdf.writeText("Page 1", 50, 50);
 
-        Exporter exporter = new PDFLibraryAdapter();
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        exporter.export(doc, output);
+        pdf.newPage();
+        pdf.setFont(PDFBuilder.Font.HELVETICA, 12);
+        pdf.writeText("Page 2", 50, 50);
 
-        try (PDDocument pdf = Loader.loadPDF(output.toByteArray())) {
+        byte[] bytes = pdf.toByteArray();
+        try (PDDocument doc = Loader.loadPDF(bytes)) {
+            assertEquals(2, doc.getNumberOfPages());
             PDFTextStripper stripper = new PDFTextStripper();
-            String text = stripper.getText(pdf);
-            assertTrue(text.contains("Empty Doc"));
+            stripper.setStartPage(1);
+            stripper.setEndPage(1);
+            assertTrue(stripper.getText(doc).contains("Page 1"));
+
+            stripper.setStartPage(2);
+            stripper.setEndPage(2);
+            assertTrue(stripper.getText(doc).contains("Page 2"));
         }
     }
 
     @Test
-    void exporterAdapter_multipleElements() throws IOException {
-        Document doc = new Document("Multi-element Doc");
-        doc.addElement(new TextElement("Paragraph one"));
-        doc.addElement(new TextElement("Paragraph two"));
-        doc.addElement(new CodeElement("java", "System.out.println(\"hi\");"));
+    void adapter_differentFonts() throws IOException {
+        PDFBuilder pdf = new PDFLibraryAdapter();
+        pdf.newPage();
+        pdf.setFont(PDFBuilder.Font.HELVETICA_BOLD, 16);
+        pdf.writeText("Bold Title", 50, 50);
 
-        Exporter exporter = new PDFLibraryAdapter();
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        exporter.export(doc, output);
+        pdf.setFont(PDFBuilder.Font.HELVETICA_OBLIQUE, 10);
+        pdf.writeText("Italic note", 50, 80);
 
-        try (PDDocument pdf = Loader.loadPDF(output.toByteArray())) {
+        byte[] bytes = pdf.toByteArray();
+        try (PDDocument doc = Loader.loadPDF(bytes)) {
             PDFTextStripper stripper = new PDFTextStripper();
-            String text = stripper.getText(pdf);
-            assertTrue(text.contains("Paragraph one"));
-            assertTrue(text.contains("Paragraph two"));
-            assertTrue(text.contains("java"));
+            String text = stripper.getText(doc);
+            assertTrue(text.contains("Bold Title"));
+            assertTrue(text.contains("Italic note"));
         }
     }
 
     @Test
-    void exporterAdapter_nullDocument_throws() {
-        Exporter exporter = new PDFLibraryAdapter();
-        assertThrows(IllegalArgumentException.class, () ->
-                exporter.export(null, new ByteArrayOutputStream())
-        );
+    void adapter_toByteArrayTwice_throws() {
+        PDFBuilder pdf = new PDFLibraryAdapter();
+        pdf.newPage();
+        pdf.setFont(PDFBuilder.Font.HELVETICA, 12);
+        pdf.writeText("content", 50, 50);
+        pdf.toByteArray();
+
+        assertThrows(RuntimeException.class, pdf::toByteArray);
     }
 
     @Test
-    void exporterAdapter_nullOutputStream_throws() {
-        Document doc = new Document("Test");
-        Exporter exporter = new PDFLibraryAdapter();
-        assertThrows(IllegalArgumentException.class, () ->
-                exporter.export(doc, null)
-        );
+    void adapter_implementsPDFBuilder() {
+        assertInstanceOf(PDFBuilder.class, new PDFLibraryAdapter());
     }
 
     @Test
-    void exporterAdapter_implementsExporterInterface() {
-        PDFLibraryAdapter adapter = new PDFLibraryAdapter();
-        assertInstanceOf(Exporter.class, adapter);
+    void adapter_getPageHeight() {
+        PDFBuilder pdf = new PDFLibraryAdapter();
+        assertTrue(pdf.getPageHeight() > 800);
     }
 }

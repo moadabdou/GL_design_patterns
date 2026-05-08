@@ -10,6 +10,10 @@ public abstract class ElementDecorator implements Element {
         this.wrapped = wrapped;
     }
 
+    public Element getWrapped() {
+        return wrapped;
+    }
+
     @Override
     public String render() {
         return wrapped.render();

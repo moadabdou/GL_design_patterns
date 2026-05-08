@@ -92,6 +92,7 @@ class ElementTest {
         assertSame(img, doc.getElement(0));
     }
 
+    @SuppressWarnings("unused")
     @Test
     void document_isIterable() {
         Document doc = new Document("Doc");
