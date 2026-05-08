@@ -1,6 +1,7 @@
 package com.glproject.util;
 
-import java.io.PrintStream;
+import java.io.*;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -13,6 +14,16 @@ public class Logger {
     private static Level globalLevel = Level.INFO;
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static PrintStream output = System.out;
+    private static PrintStream fileOutput = null;
+
+    static {
+        try {
+            Files.createDirectories(Paths.get("logs"));
+            fileOutput = new PrintStream(new FileOutputStream("logs/app.log", true));
+        } catch (IOException e) {
+            // file logging unavailable
+        }
+    }
 
     private static final String NAME = "App";
 
@@ -108,9 +119,16 @@ public class Logger {
             return;
         }
         String timestamp = LocalDateTime.now().format(FORMATTER);
-        output.printf("%s [%s] %s - %s%n", timestamp, level, NAME, message);
+        String line = String.format("%s [%s] %s - %s", timestamp, level, NAME, message);
+        output.println(line);
+        if (fileOutput != null) {
+            fileOutput.println(line);
+        }
         if (t != null) {
             t.printStackTrace(output);
+            if (fileOutput != null) {
+                t.printStackTrace(fileOutput);
+            }
         }
     }
 
@@ -124,7 +142,7 @@ public class Logger {
             if (message.charAt(i) == '{' && i + 1 < message.length() && message.charAt(i + 1) == '}') {
                 sb.append(argIndex < args.length ? args[argIndex] : "{}");
                 argIndex++;
-                i++;
+                i++; // skip }
             } else {
                 sb.append(message.charAt(i));
             }
