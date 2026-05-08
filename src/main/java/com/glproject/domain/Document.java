@@ -23,8 +23,20 @@ public class Document implements Iterable<Element> {
         elements.add(element);
     }
 
+    public void addElement(int index, Element element) {
+        elements.add(index, element);
+    }
+
     public boolean removeElement(Element element) {
         return elements.remove(element);
+    }
+
+    public Element removeElement(int index) {
+        return elements.remove(index);
+    }
+
+    public Element setElement(int index, Element element) {
+        return elements.set(index, element);
     }
 
     public Element getElement(int index) {
