@@ -31,6 +31,7 @@ public class PDFExportStrategy implements ExportStrategy {
             Color awtColor = Color.BLACK;
             Element current = element;
 
+            // Unwrap decorators to determine final styling
             while (current instanceof ElementDecorator dec) {
                 if (dec instanceof BoldDecorator) bold = true;
                 if (dec instanceof ItalicDecorator) italic = true;
