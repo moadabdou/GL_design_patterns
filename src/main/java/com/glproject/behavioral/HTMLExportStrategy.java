@@ -54,11 +54,11 @@ public class HTMLExportStrategy implements ExportStrategy {
     }
 
     private String renderTable(TableElement table) {
-        StringBuilder sb = new StringBuilder("<table>\n");
+        StringBuilder sb = new StringBuilder("<table style=\"border-collapse: collapse; border: 1px solid black;\">\n");
         for (List<String> row : table.getRows()) {
             sb.append("<tr>\n");
             for (String cell : row) {
-                sb.append("<td>").append(escapeHtml(cell)).append("</td>\n");
+                sb.append("<td style=\"border: 1px solid black; padding: 4px;\">").append(escapeHtml(cell)).append("</td>\n");
             }
             sb.append("</tr>\n");
         }

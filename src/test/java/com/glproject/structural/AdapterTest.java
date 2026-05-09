@@ -92,4 +92,35 @@ class AdapterTest {
         PDFBuilder pdf = new PDFLibraryAdapter();
         assertTrue(pdf.getPageHeight() > 800);
     }
+
+    @Test
+    void adapter_drawsLines() throws IOException {
+        PDFBuilder pdf = new PDFLibraryAdapter();
+        pdf.newPage();
+        pdf.setLineWidth(0.5f);
+        pdf.drawLine(50, 50, 200, 50);
+        pdf.drawLine(50, 50, 50, 100);
+        byte[] bytes = pdf.toByteArray();
+        assertTrue(bytes.length > 0);
+    }
+
+    @Test
+    void adapter_getsTextWidth() {
+        PDFBuilder pdf = new PDFLibraryAdapter();
+        pdf.newPage();
+        pdf.setFont(PDFBuilder.Font.HELVETICA, 12);
+        float width = pdf.getTextWidth("Hello");
+        assertTrue(width > 0);
+    }
+
+    @Test
+    void adapter_setsColor() throws IOException {
+        PDFBuilder pdf = new PDFLibraryAdapter();
+        pdf.newPage();
+        pdf.setColor(1, 0, 0);
+        pdf.setFont(PDFBuilder.Font.HELVETICA, 12);
+        pdf.writeText("red", 50, 50);
+        byte[] bytes = pdf.toByteArray();
+        assertTrue(bytes.length > 0);
+    }
 }

@@ -43,6 +43,35 @@ class StrategyTest {
     }
 
     @Test
+    void pdfStrategy_rendersTable() throws Exception {
+        Document doc = new Document("Test");
+        doc.addElement(new TableElement(List.of(List.of("a", "b"), List.of("c", "d"))));
+
+        byte[] result = new PDFExportStrategy().render(doc);
+        try (PDDocument pdf = Loader.loadPDF(result)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            String text = stripper.getText(pdf);
+            assertTrue(text.contains("a"));
+            assertTrue(text.contains("b"));
+            assertTrue(text.contains("c"));
+            assertTrue(text.contains("d"));
+        }
+    }
+
+    @Test
+    void pdfStrategy_respectsColorDecorator() throws Exception {
+        Document doc = new Document("Test");
+        doc.addElement(new ColorDecorator(new TextElement("red text"), "red"));
+
+        byte[] result = new PDFExportStrategy().render(doc);
+        try (PDDocument pdf = Loader.loadPDF(result)) {
+            PDFTextStripper stripper = new PDFTextStripper();
+            String text = stripper.getText(pdf);
+            assertTrue(text.contains("red text"));
+        }
+    }
+
+    @Test
     void pdfStrategy_multipleElements() throws Exception {
         Document doc = new Document("Doc");
         doc.addElement(new TextElement("line one"));
@@ -86,9 +115,10 @@ class StrategyTest {
         doc.addElement(new TableElement(List.of(List.of("a", "b"), List.of("c", "d"))));
 
         String result = new String(new HTMLExportStrategy().render(doc), StandardCharsets.UTF_8);
-        assertTrue(result.contains("<table>"));
-        assertTrue(result.contains("<td>a</td>"));
-        assertTrue(result.contains("<td>b</td>"));
+        assertTrue(result.contains("border-collapse"));
+        assertTrue(result.contains("border: 1px solid black"));
+        assertTrue(result.contains(">a<"));
+        assertTrue(result.contains(">b<"));
     }
 
     @Test
@@ -224,12 +254,12 @@ class StrategyTest {
     }
 
     @Test
-    void markdownStrategy_ignoresColorDecorator() {
+    void markdownStrategy_rendersColorDecorator() {
         Document doc = new Document("Doc");
         doc.addElement(new ColorDecorator(new TextElement("text"), "red"));
 
         String result = new String(new MarkdownExportStrategy().render(doc), StandardCharsets.UTF_8);
-        assertFalse(result.contains("red"));
+        assertTrue(result.contains("style=\"color:red\""));
         assertTrue(result.contains("text"));
     }
 

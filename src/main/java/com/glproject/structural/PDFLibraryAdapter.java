@@ -15,6 +15,8 @@ public class PDFLibraryAdapter implements PDFBuilder {
     private final PDDocument document;
     private PDPageContentStream contentStream;
     private PDRectangle pageSize;
+    private PDType1Font currentFont;
+    private float currentFontSize;
 
     public PDFLibraryAdapter() {
         this.document = new PDDocument();
@@ -36,7 +38,9 @@ public class PDFLibraryAdapter implements PDFBuilder {
     @Override
     public void setFont(PDFBuilder.Font font, float size) {
         try {
-            contentStream.setFont(new PDType1Font(toStandard14(font)), size);
+            currentFont = new PDType1Font(toStandard14(font));
+            currentFontSize = size;
+            contentStream.setFont(currentFont, size);
         } catch (IOException e) {
             throw new RuntimeException("Failed to set font", e);
         }
@@ -64,6 +68,59 @@ public class PDFLibraryAdapter implements PDFBuilder {
         } catch (IOException e) {
             throw new RuntimeException("Failed to draw image: " + imagePath, e);
         }
+    }
+
+    @Override
+    public void drawLine(float x1, float y1, float x2, float y2) {
+        try {
+            float pdfY1 = pageSize.getHeight() - y1;
+            float pdfY2 = pageSize.getHeight() - y2;
+            contentStream.moveTo(x1, pdfY1);
+            contentStream.lineTo(x2, pdfY2);
+            contentStream.stroke();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to draw line", e);
+        }
+    }
+
+    @Override
+    public void setLineWidth(float width) {
+        try {
+            contentStream.setLineWidth(width);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to set line width", e);
+        }
+    }
+
+    @Override
+    public void setColor(float r, float g, float b) {
+        try {
+            contentStream.setNonStrokingColor(r, g, b);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to set color", e);
+        }
+    }
+
+    @Override
+    public float getTextWidth(String text) {
+        if (currentFont == null) return 0;
+        try {
+            return currentFont.getStringWidth(text) * currentFontSize / 1000f;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to get text width", e);
+        }
+    }
+
+    @Override
+    public float getFontAscent() {
+        if (currentFont == null) return 0;
+        return currentFont.getFontDescriptor().getAscent() * currentFontSize / 1000f;
+    }
+
+    @Override
+    public float getFontDescent() {
+        if (currentFont == null) return 0;
+        return Math.abs(currentFont.getFontDescriptor().getDescent()) * currentFontSize / 1000f;
     }
 
     @Override

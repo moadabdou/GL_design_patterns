@@ -21,6 +21,12 @@ public interface PDFBuilder {
     void setFont(Font font, float size);
     void writeText(String text, float x, float y);
     void drawImage(String imagePath, float x, float y, float width, float height);
+    void drawLine(float x1, float y1, float x2, float y2);
+    void setLineWidth(float width);
+    void setColor(float r, float g, float b);
+    float getTextWidth(String text);
+    float getFontAscent();
+    float getFontDescent();
     float getPageHeight();
     byte[] toByteArray();
 }

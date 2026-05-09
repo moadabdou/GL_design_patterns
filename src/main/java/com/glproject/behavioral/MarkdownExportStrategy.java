@@ -31,7 +31,7 @@ public class MarkdownExportStrategy implements ExportStrategy {
             return "<u>" + renderElement(dec.getWrapped()) + "</u>";
         }
         if (element instanceof ColorDecorator dec) {
-            return renderElement(dec.getWrapped());
+            return "<span style=\"color:" + dec.getColor() + "\">" + renderElement(dec.getWrapped()) + "</span>";
         }
         if (element instanceof TextElement text) {
             return text.getContent();
