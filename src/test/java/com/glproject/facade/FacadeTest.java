@@ -111,16 +111,22 @@ class FacadeTest {
 
     @Test
     void facade_logsExportOperation() throws IOException {
+        DocumentEventBus bus = new DocumentEventBus();
+        LoggingObserver loggingObserver = new LoggingObserver();
+        bus.subscribe(loggingObserver);
+        DocumentExporterFacade facade = new DocumentExporterFacade(bus);
+
         Document doc = new Document("Log Test");
         doc.addElement(new TextElement("content"));
 
         Path tempFile = Files.createTempFile("facade-log-test-", ".html");
         try {
-            new DocumentExporterFacade().exportHTML(doc, tempFile.toString());
+            facade.exportHTML(doc, tempFile.toString());
 
             String logs = logCapture.toString();
-            assertTrue(logs.contains("Exporting document"));
-            assertTrue(logs.contains("Log Test"));
+            assertTrue(logs.contains("EXPORT_STARTED"));
+            assertTrue(logs.contains(tempFile.toString()));
+            assertTrue(logs.contains("EXPORT_COMPLETED"));
         } finally {
             Files.deleteIfExists(tempFile);
         }

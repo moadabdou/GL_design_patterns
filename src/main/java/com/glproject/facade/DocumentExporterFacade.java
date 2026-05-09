@@ -1,28 +1,43 @@
 package com.glproject.facade;
 
+import com.glproject.behavioral.DocumentEvent;
+import com.glproject.behavioral.DocumentEventBus;
 import com.glproject.behavioral.ExportStrategy;
 import com.glproject.behavioral.HTMLExportStrategy;
 import com.glproject.behavioral.MarkdownExportStrategy;
 import com.glproject.behavioral.PDFExportStrategy;
 import com.glproject.domain.Document;
-import com.glproject.util.Logger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class DocumentExporterFacade {
 
-    private static final Logger logger = Logger.getInstance();
+    private DocumentEventBus eventBus = new DocumentEventBus();
+
+    public DocumentExporterFacade() {
+    }
+
+    public DocumentExporterFacade(DocumentEventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+
+    public void setEventBus(DocumentEventBus eventBus) {
+        this.eventBus = eventBus;
+    }
+
+    public DocumentEventBus getEventBus() {
+        return eventBus;
+    }
 
     public void export(Document document, String filePath, ExportStrategy strategy) {
-        logger.info("Exporting document '{}' to {} using {}", document.getTitle(), filePath,
-                strategy.getClass().getSimpleName());
+        eventBus.notifyObservers(DocumentEvent.EXPORT_STARTED, filePath);
         byte[] content = strategy.render(document);
         try {
             Files.write(Path.of(filePath), content);
-            logger.info("Successfully exported document '{}' to {}", document.getTitle(), filePath);
+            eventBus.notifyObservers(DocumentEvent.EXPORT_COMPLETED, filePath);
         } catch (IOException e) {
-            logger.error("Failed to export document '{}' to {}", document.getTitle(), filePath);
+            eventBus.notifyObservers(DocumentEvent.EXPORT_FAILED, filePath);
             throw new RuntimeException("Failed to export to " + filePath, e);
         }
     }
