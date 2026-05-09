@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facade Pattern</title>
+    <!-- Preconnect to Google Fonts for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Mermaid.js for diagrams -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.4.0/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: 'rgba(10, 20, 15, 0.8)',
+                primaryTextColor: '#f0fdf6',
+                primaryBorderColor: '#00ff9d',
+                lineColor: '#00ff9d',
+                secondaryColor: 'rgba(0, 255, 157, 0.05)',
+                tertiaryColor: '#050b08',
+                fontFamily: 'Outfit',
+                edgeLabelBackground: '#050b08'
+            }
+        });
+    </script>
+
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #050b08; /* Very dark green/black */
+            --surface-color: rgba(10, 20, 15, 0.75); /* Translucent surface */
+            --border-color: rgba(0, 255, 157, 0.15); /* Subtle green border */
+            --primary-green: #00ff9d; /* Vibrant neon green */
+            --primary-green-glow: rgba(0, 255, 157, 0.4);
+            --text-main: #f0fdf6;
+            --text-muted: #a7bcae;
+            --gradient-text: linear-gradient(135deg, #ffffff 0%, #a7bcae 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(0, 255, 157, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(0, 255, 157, 0.05), transparent 25%),
+                linear-gradient(to bottom right, #030705, #08120d);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .ambient-glow {
+            position: absolute;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, rgba(0,255,157,0.03) 0%, transparent 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+            pointer-events: none;
+            animation: pulse 10s ease-in-out infinite alternate;
+        }
+
+        .slide-container {
+            width: 85%;
+            max-width: 1200px;
+            aspect-ratio: 16/9;
+            background: var(--surface-color);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 3rem 4.5rem;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.7), 
+                        inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+            animation: fadeIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .slide-number {
+            position: absolute;
+            top: 2.5rem;
+            right: 3.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--primary-green);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .slide-number::after {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            background: var(--primary-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary-green-glow);
+        }
+
+        .header-section {
+            margin-bottom: 2rem;
+        }
+
+        .subtitle {
+            color: var(--primary-green);
+            font-size: 1.125rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .subtitle::before {
+            content: '';
+            display: inline-block;
+            width: 40px;
+            height: 2px;
+            background: var(--primary-green);
+            box-shadow: 0 0 10px var(--primary-green-glow);
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            background: var(--gradient-text);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .two-col-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2.5rem;
+            flex-grow: 1;
+            margin-bottom: 1.5rem;
+        }
+
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .info-card {
+            background: rgba(0, 255, 157, 0.02);
+            border-left: 4px solid var(--primary-green);
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 12px 12px 0;
+            position: relative;
+        }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(0, 255, 157, 0.05) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .info-title {
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .info-text {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            font-weight: 300;
+        }
+
+        .info-text code {
+            font-family: 'Fira Code', monospace;
+            background: rgba(0, 255, 157, 0.1);
+            color: var(--primary-green);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .files-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .files-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(0, 255, 157, 0.05);
+            color: var(--primary-green);
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            text-decoration: none;
+            border: 1px solid rgba(0, 255, 157, 0.15);
+            transition: all 0.3s ease;
+            width: fit-content;
+        }
+
+        .file-link:hover {
+            background: rgba(0, 255, 157, 0.15);
+            transform: translateX(8px);
+            box-shadow: 0 5px 15px rgba(0, 255, 157, 0.1);
+            border-color: rgba(0, 255, 157, 0.3);
+        }
+
+        .diagram-container {
+            background: rgba(0, 255, 157, 0.02);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 30px rgba(0, 255, 157, 0.05);
+            min-height: 180px;
+        }
+
+        .code-container {
+            background: #0a140f;
+            border: 1px solid rgba(0, 255, 157, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        
+        .code-header {
+            background: rgba(255,255,255,0.03);
+            padding: 0.5rem 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(0, 255, 157, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Override prism styles to match theme */
+        pre[class*="language-"] {
+            margin: 0 !important;
+            padding: 1rem !important;
+            background: transparent !important;
+            font-size: 0.9rem !important;
+            font-family: 'Fira Code', monospace !important;
+        }
+        
+        .token.keyword { color: #c678dd !important; }
+        .token.string { color: #98c379 !important; }
+        .token.class-name { color: #e5c07b !important; }
+
+        .footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(167, 188, 174, 0.6);
+            font-size: 0.875rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+        }
+
+        .stagger-1 { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards; opacity: 0; }
+        .stagger-2 { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s forwards; opacity: 0; }
+        .stagger-3 { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards; opacity: 0; }
+        .stagger-4 { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards; opacity: 0; }
+        .stagger-5 { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.0s forwards; opacity: 0; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Sci-fi Decorative corner accents */
+        .decor-corner {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid transparent;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        .slide-container:hover .decor-corner {
+            opacity: 1;
+        }
+        .top-left { 
+            top: 24px; left: 24px; 
+            border-top-color: var(--primary-green); 
+            border-left-color: var(--primary-green); 
+            border-top-left-radius: 8px;
+        }
+        .bottom-right { 
+            bottom: 24px; right: 24px; 
+            border-bottom-color: var(--primary-green); 
+            border-right-color: var(--primary-green); 
+            border-bottom-right-radius: 8px;
+        }
+        
+        .mermaid {
+            font-family: 'Fira Code', monospace;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+
+    <div class="slide-container">
+        <!-- Decorative Elements -->
+        <div class="decor-corner top-left"></div>
+        <div class="decor-corner bottom-right"></div>
+        
+        <div class="slide-number">Slide 8</div>
+
+        <div class="header-section stagger-1">
+            <div class="subtitle">Facade Pattern</div>
+            <h1 class="title">Structural - Simplifying Complexity</h1>
+        </div>
+
+        <div class="two-col-layout">
+            <div class="left-col">
+                <div class="info-card stagger-2">
+                    <div class="info-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                        Purpose
+                    </div>
+                    <div class="info-text">
+                        Provide a unified interface to a set of interfaces in a subsystem.
+                    </div>
+                </div>
+
+                <div class="info-card stagger-3">
+                    <div class="info-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        Usage
+                    </div>
+                    <div class="info-text">
+                        Hiding the multi-step export logic.
+                    </div>
+                </div>
+
+                <div class="files-section stagger-4">
+                    <div class="files-title">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                        Relevant Files
+                    </div>
+                    <a href="#" class="file-link">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                        DocumentExporterFacade.java
+                    </a>
+                </div>
+            </div>
+
+            <div class="right-col">
+                <div class="diagram-container stagger-4">
+                    <div class="mermaid">
+                        classDiagram
+                            class DocumentExporterFacade {
+                                +exportHTML()
+                                +exportPDF()
+                                +exportMD()
+                            }
+                    </div>
+                </div>
+
+                <div class="code-container stagger-5">
+                    <div class="code-header">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                        Facade Implementation snippet
+                    </div>
+                    <pre><code class="language-java">DocumentExporterFacade facade = new DocumentExporterFacade();
+facade.exportHTML(doc, "demo.html");</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer stagger-5" style="animation-delay: 1.2s;">
+            <span>Document Builder: Integrating 10 Design Patterns</span>
+            <span>Duration: 10 Minutes</span>
+        </div>
+    </div>
+
+</body>
+</html>
