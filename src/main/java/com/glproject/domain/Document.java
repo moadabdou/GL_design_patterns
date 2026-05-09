@@ -2,12 +2,15 @@ package com.glproject.domain;
 
 import com.glproject.behavioral.DocumentEvent;
 import com.glproject.behavioral.DocumentEventBus;
+import com.glproject.behavioral.DocumentIterator;
+import com.glproject.behavioral.ElementTypeFilter;
 
 import java.util.*;
 
 public class Document implements Iterable<Element> {
 
     private final List<Element> elements = new ArrayList<>();
+    private int modCount;
     private String title;
     private DocumentEventBus eventBus = new DocumentEventBus();
 
@@ -38,17 +41,20 @@ public class Document implements Iterable<Element> {
 
     public void addElement(Element element) {
         elements.add(element);
+        modCount++;
         eventBus.notifyObservers(DocumentEvent.ELEMENT_ADDED, element);
     }
 
     public void addElement(int index, Element element) {
         elements.add(index, element);
+        modCount++;
         eventBus.notifyObservers(DocumentEvent.ELEMENT_ADDED, element);
     }
 
     public boolean removeElement(Element element) {
         boolean removed = elements.remove(element);
         if (removed) {
+            modCount++;
             eventBus.notifyObservers(DocumentEvent.ELEMENT_REMOVED, element);
         }
         return removed;
@@ -56,6 +62,7 @@ public class Document implements Iterable<Element> {
 
     public Element removeElement(int index) {
         Element removed = elements.remove(index);
+        modCount++;
         eventBus.notifyObservers(DocumentEvent.ELEMENT_REMOVED, removed);
         return removed;
     }
@@ -64,6 +71,10 @@ public class Document implements Iterable<Element> {
         Element old = elements.set(index, element);
         eventBus.notifyObservers(DocumentEvent.ELEMENT_MODIFIED, element);
         return old;
+    }
+
+    public int getModCount() {
+        return modCount;
     }
 
     public Element getElement(int index) {
@@ -76,6 +87,10 @@ public class Document implements Iterable<Element> {
 
     @Override
     public Iterator<Element> iterator() {
-        return Collections.unmodifiableList(elements).iterator();
+        return new DocumentIterator(this, ElementTypeFilter.all());
+    }
+
+    public DocumentIterator iterator(ElementTypeFilter filter) {
+        return new DocumentIterator(this, filter);
     }
 }
