@@ -1,16 +1,12 @@
 package com.glproject.domain;
 
 import com.glproject.behavioral.DocumentEventBus;
-import com.glproject.behavioral.DocumentObserver;
 import com.glproject.behavioral.DocumentEvent;
-import com.glproject.structural.BoldDecorator;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 class DocumentTest {
